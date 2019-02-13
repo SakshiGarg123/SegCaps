@@ -292,7 +292,7 @@ def threadsafe_generator(f):
         return threadsafe_iter(f(*a, **kw))
     return g
 
-@threadsafe_generator
+# @threadsafe_generator
 def generate_train_batches(root_path, train_list, net_input_shape, net, batchSize=1, numSlices=1, subSampAmt=-1,
                            stride=1, downSampAmt=1, shuff=1, aug_data=1):
     # Create placeholders for training
@@ -371,7 +371,7 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
             else:
                 yield (img_batch[:count,...], mask_batch[:count,...])
 
-@threadsafe_generator
+# @threadsafe_generator
 def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1, numSlices=1, subSampAmt=-1,
                          stride=1, downSampAmt=1, shuff=1):
     # Create placeholders for validation

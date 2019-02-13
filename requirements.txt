@@ -6,6 +6,5 @@ scikit-learn
 scikit-image
 pillow
 SimpleITK
-tensorflow-gpu
 keras
 h5py

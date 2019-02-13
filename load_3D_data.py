@@ -4,7 +4,6 @@ Original Paper by Rodney LaLonde and Ulas Bagci (https://arxiv.org/abs/1804.0424
 Code written by: Rodney LaLonde
 If you use significant portions of this code or the ideas from our paper, please cite it :)
 If you have any questions, please email me at lalonde@knights.ucf.edu.
-
 This file is used for loading training, validation, and testing data into the models.
 It is specifically designed to handle 3D single-channel medical data.
 Modifications will be needed to train/test on normal 3-channel images.
@@ -37,13 +36,16 @@ debug = 0
 
 def load_data(root, split):
     # Load the training and testing lists
-    with open(join(root, 'split_lists', 'train_split_' + str(split) + '.csv'), 'rb') as f:
+    with open(join(root, 'split_lists', 'train_split_' + str(split) + '.csv'), 'r') as f:
         reader = csv.reader(f)
         training_list = list(reader)
 
-    with open(join(root, 'split_lists', 'test_split_' + str(split) + '.csv'), 'rb') as f:
+    with open(join(root, 'split_lists', 'test_split_' + str(split) + '.csv'), 'r') as f:
         reader = csv.reader(f)
         testing_list = list(reader)
+
+    training_list = training_list[::2]
+    testing_list = testing_list[::2]
 
     new_training_list, validation_list = train_test_split(training_list, test_size=0.1, random_state=7)
 
@@ -102,11 +104,11 @@ def split_data(root_path, num_splits=4):
     kf = KFold(n_splits=num_splits)
     n = 0
     for train_index, test_index in kf.split(mask_list):
-        with open(join(outdir,'train_split_' + str(n) + '.csv'), 'wb') as csvfile:
+        with open(join(outdir,'train_split_' + str(n) + '.csv'), 'w') as csvfile:
             writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for i in train_index:
                 writer.writerow([basename(mask_list[i])])
-        with open(join(outdir,'test_split_' + str(n) + '.csv'), 'wb') as csvfile:
+        with open(join(outdir,'test_split_' + str(n) + '.csv'), 'w') as csvfile:
             writer = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for i in test_index:
                 writer.writerow([basename(mask_list[i])])
@@ -290,7 +292,7 @@ def threadsafe_generator(f):
         return threadsafe_iter(f(*a, **kw))
     return g
 
-@threadsafe_generator
+# @threadsafe_generator
 def generate_train_batches(root_path, train_list, net_input_shape, net, batchSize=1, numSlices=1, subSampAmt=-1,
                            stride=1, downSampAmt=1, shuff=1, aug_data=1):
     # Create placeholders for training
@@ -369,7 +371,7 @@ def generate_train_batches(root_path, train_list, net_input_shape, net, batchSiz
             else:
                 yield (img_batch[:count,...], mask_batch[:count,...])
 
-@threadsafe_generator
+# @threadsafe_generator
 def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1, numSlices=1, subSampAmt=-1,
                          stride=1, downSampAmt=1, shuff=1):
     # Create placeholders for validation
@@ -434,7 +436,7 @@ def generate_val_batches(root_path, val_list, net_input_shape, net, batchSize=1,
             else:
                 yield (img_batch[:count,...], mask_batch[:count,...])
 
-@threadsafe_generator
+# @threadsafe_generator
 def generate_test_batches(root_path, test_list, net_input_shape, batchSize=1, numSlices=1, subSampAmt=0,
                           stride=1, downSampAmt=1):
     # Create placeholders for testing

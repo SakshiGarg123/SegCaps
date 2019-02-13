@@ -8,6 +8,8 @@ If you have any questions, please email me at lalonde@knights.ucf.edu.
 This file is used for training models. Please see the README for details about training.
 '''
 
+# removed csvlogger in get_callbacks()
+
 from __future__ import print_function
 
 import matplotlib
@@ -21,7 +23,7 @@ import numpy as np
 from keras.optimizers import Adam
 from keras import backend as K
 K.set_image_data_format('channels_last')
-from keras.utils.training_utils import multi_gpu_model
+from keras.utils import multi_gpu_model
 from keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping, ReduceLROnPlateau, TensorBoard
 import tensorflow as tf
 
@@ -30,6 +32,7 @@ from load_3D_data import load_class_weights, generate_train_batches, generate_va
 
 
 def get_loss(root, split, net, recon_wei, choice):
+    # print("Inside get loss..")
     if choice == 'w_bce':
         pos_class_weight = load_class_weights(root=root, split=split)
         loss = weighted_binary_crossentropy_loss(pos_class_weight)
@@ -56,7 +59,8 @@ def get_callbacks(arguments):
     else:
         monitor_name = 'val_dice_hard'
 
-    csv_logger = CSVLogger(join(arguments.log_dir, arguments.output_name + '_log_' + arguments.time + '.csv'), separator=',')
+    # csv_logger = CSVLogger(join(arguments.log_dir, arguments.output_name + '_log_' + arguments.time + '.csv'), separator=',')
+    csv_logger = CSVLogger(join(arguments.log_dir, arguments.output_name + '_log_' + '.csv'), separator=',')
     tb = TensorBoard(arguments.tf_log_dir, batch_size=arguments.batch_size, histogram_freq=0)
     model_checkpoint = ModelCheckpoint(join(arguments.check_dir, arguments.output_name + '_model_' + arguments.time + '.hdf5'),
                                        monitor=monitor_name, save_best_only=True, save_weights_only=True,
@@ -134,17 +138,21 @@ def train(args, train_list, val_list, u_model, net_input_shape):
     model = compile_model(args=args, net_input_shape=net_input_shape, uncomp_model=u_model)
     # Set the callbacks
     callbacks = get_callbacks(args)
+    # print(callbacks)
+    train_batches = generate_train_batches(args.data_root_dir, train_list, net_input_shape, net=args.net,
+                               batchSize=args.batch_size, numSlices=args.slices, subSampAmt=args.subsamp,
+                               stride=args.stride, shuff=args.shuffle_data, aug_data=args.aug_data)
 
+    val_batches = generate_val_batches(args.data_root_dir, val_list, net_input_shape, net=args.net,
+                                             batchSize=args.batch_size,  numSlices=args.slices, subSampAmt=0,
+                                             stride=20, shuff=args.shuffle_data)
+    print("train_batches..",train_batches)
     # Training the network
     history = model.fit_generator(
-        generate_train_batches(args.data_root_dir, train_list, net_input_shape, net=args.net,
-                               batchSize=args.batch_size, numSlices=args.slices, subSampAmt=args.subsamp,
-                               stride=args.stride, shuff=args.shuffle_data, aug_data=args.aug_data),
+        train_batches,
         max_queue_size=40, workers=4, use_multiprocessing=False,
         steps_per_epoch=10000,
-        validation_data=generate_val_batches(args.data_root_dir, val_list, net_input_shape, net=args.net,
-                                             batchSize=args.batch_size,  numSlices=args.slices, subSampAmt=0,
-                                             stride=20, shuff=args.shuffle_data),
+        validation_data=val_batches,
         validation_steps=500, # Set validation stride larger to see more of the data.
         epochs=200,
         callbacks=callbacks,

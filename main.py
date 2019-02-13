@@ -18,7 +18,7 @@ import argparse
 import SimpleITK as sitk
 from time import gmtime, strftime
 time = strftime("%Y-%m-%d-%H:%M:%S", gmtime())
-
+print('Apna Time Aayega '+time)
 from keras.utils import print_summary
 
 from load_3D_data import load_data, split_data
@@ -38,8 +38,11 @@ def main(args):
         train_list, val_list, test_list = load_data(args.data_root_dir, args.split_num)
 
     # Get image properties from first image. Assume they are all the same.
+    # print("train_list_0",train_list)
     img_shape = sitk.GetArrayFromImage(sitk.ReadImage(join(args.data_root_dir, 'imgs', train_list[0][0]))).shape
     net_input_shape = (img_shape[1], img_shape[2], args.slices)
+
+    # print(img_shape)
 
     # Create the model for training/testing/manipulation
     model_list = create_model(args=args, input_shape=net_input_shape)

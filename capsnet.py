@@ -22,6 +22,7 @@ def CapsNetR3(input_shape, n_class=2):
 
     # Reshape layer to be 1 capsule x [filters] atoms
     _, H, W, C = conv1.get_shape()
+    # print("conv1 params",conv1.get_shape())
     conv1_reshaped = layers.Reshape((H.value, W.value, 1, C.value))(conv1)
 
     # Layer 1: Primary Capsule: Conv cap with routing 1
@@ -90,9 +91,10 @@ def CapsNetR3(input_shape, n_class=2):
     # Decoder network.
     _, H, W, C, A = seg_caps.get_shape()
     y = layers.Input(shape=input_shape[:-1]+(1,))
+    # print(y)
     masked_by_y = Mask()([seg_caps, y])  # The true label is used to mask the output of capsule layer. For training
     masked = Mask()(seg_caps)  # Mask using the capsule with maximal length. For prediction
-
+    # print(masked_by_y, masked)
     def shared_decoder(mask_layer):
         recon_remove_dim = layers.Reshape((H.value, W.value, A.value))(mask_layer)
 
